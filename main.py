@@ -5,12 +5,17 @@ from tkextrafont import Font
 from pathlib import Path
 import random
 
+# TODO LIST
+# Pause button, sound effects, high score, levels
+
 
 # GAME SETTINGS
 GAME_RUNNING = None
+GAME_PAUSED = False
+GAME_OVER = False
 GAME_WIDTH = 800
 GAME_HEIGHT = 600
-SPEED = 100
+SPEED = 300
 SPACE_SIZE = 50
 BODY_PARTS = 3
 SNAKE_COLOR = '#ebe134'
@@ -41,7 +46,12 @@ class Food:
         canvas.create_rectangle(x, y, x + SPACE_SIZE, y + SPACE_SIZE, fill = FOOD_COLOR, tags="food")
 
 # FUNCTIONS
-def next_turn(snake, food):
+def next_turn():
+    global GAME_RUNNING, score, food
+
+    if GAME_PAUSED:
+        return
+
     global GAME_RUNNING
     x, y = snake.coordinates[0]
 
@@ -62,27 +72,24 @@ def next_turn(snake, food):
 
     if x == food.coordinates[0] and y == food.coordinates[1]:
         global score
-
         score += 1
-
         label.config(text = f"Score: {score}")
-
         canvas.delete("food")
-
         food = Food()
     else:
         del snake.coordinates[-1]
-
         canvas.delete(snake.squares[-1])
-
         del snake.squares[-1]
 
     if check_collisions(snake):
         game_over()
     else:
-        GAME_RUNNING = window.after(SPEED, next_turn, snake, food)
+        GAME_RUNNING = window.after(SPEED, next_turn)
 
 def change_direction(new_direction):
+    if GAME_PAUSED:
+        return
+
     global direction
 
     if new_direction == "left":
@@ -113,12 +120,18 @@ def check_collisions(snake):
     return False
 
 def game_over():
+    global GAME_OVER
+
     canvas.delete(ALL)
     canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()/2,
                        font=custom_font, text="GAME OVER", fill="white")
+    GAME_OVER = True
 
 def restart_game(event=None):
-    global snake, food, score, direction, GAME_RUNNING
+    global snake, food, score, direction, GAME_RUNNING, GAME_PAUSED, GAME_OVER
+
+    GAME_OVER = False
+    GAME_PAUSED = False
 
     if GAME_RUNNING is not None:
         window.after_cancel(GAME_RUNNING)
@@ -132,10 +145,22 @@ def restart_game(event=None):
     snake = Snake()
     food = Food()
 
-    next_turn(snake, food)
+    next_turn()
 
-def pause_game():
-    pass
+
+def pause_game(event=None):
+    global GAME_PAUSED, GAME_RUNNING, GAME_OVER
+
+    if not GAME_OVER:
+        if not GAME_PAUSED:
+            GAME_PAUSED = True
+            if GAME_RUNNING is not None:
+                window.after_cancel(GAME_RUNNING)
+            canvas.create_text(GAME_WIDTH/2, GAME_HEIGHT/2, font=custom_font, text="PAUSED", fill="white", tags="pause_text")
+        else:
+            GAME_PAUSED = False
+            canvas.delete("pause_text")
+            next_turn()
 
 
 window = Tk()
@@ -177,6 +202,10 @@ window.bind('<Down>', lambda event: change_direction('down'))
 # RESTART binds
 window.bind('<Key-R>', restart_game)
 window.bind('<Key-r>', restart_game)
+
+# PAUSE binds
+window.bind('<Key-P>', pause_game)
+window.bind('<Key-p>', pause_game)
 
 # WASD movement binds
 window.bind('<Key-A>', lambda event: change_direction('left'))
