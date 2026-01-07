@@ -1,10 +1,13 @@
+import tkinter
 from tkinter import *
+import tk
 from tkextrafont import Font
 from pathlib import Path
 import random
 
 
 # GAME SETTINGS
+GAME_RUNNING = None
 GAME_WIDTH = 800
 GAME_HEIGHT = 600
 SPEED = 100
@@ -39,6 +42,7 @@ class Food:
 
 # FUNCTIONS
 def next_turn(snake, food):
+    global GAME_RUNNING
     x, y = snake.coordinates[0]
 
     if direction == "up":
@@ -76,7 +80,7 @@ def next_turn(snake, food):
     if check_collisions(snake):
         game_over()
     else:
-        window.after(SPEED, next_turn, snake, food)
+        GAME_RUNNING = window.after(SPEED, next_turn, snake, food)
 
 def change_direction(new_direction):
     global direction
@@ -113,6 +117,27 @@ def game_over():
     canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()/2,
                        font=custom_font, text="GAME OVER", fill="white")
 
+def restart_game(event=None):
+    global snake, food, score, direction, GAME_RUNNING
+
+    if GAME_RUNNING is not None:
+        window.after_cancel(GAME_RUNNING)
+
+    canvas.delete(ALL)
+
+    score = 0
+    direction = 'right'
+    label.config(text = f"Score: {score}")
+
+    snake = Snake()
+    food = Food()
+
+    next_turn(snake, food)
+
+def pause_game():
+    pass
+
+
 window = Tk()
 window.title("Snake Game")
 window.resizable(False, False)
@@ -124,10 +149,12 @@ font_path = Path(__file__).parent / 'RetroGaming.ttf'
 custom_font = Font(file = str(font_path), family = "Retro Gaming", weight = 'bold', size = 30)
 
 label  = Label(window, text = f"Score: {score}", font = custom_font)
-label.pack()
+label.grid(row = 0, column = 0)
+restart = Button(window, text = "Restart", command = restart_game, font = custom_font, pady = 0)
+restart.grid(row = 0, column = 1, pady = 10)
 
 canvas = Canvas(window, bg = BACKGROUND_COLOR, width = GAME_WIDTH, height = GAME_HEIGHT)
-canvas.pack()
+canvas.grid(row = 1, columnspan = 2)
 
 window.update()
 
@@ -141,15 +168,27 @@ y = int((screen_height / 2) - (window_height / 2))
 
 window.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
-# KEY BINDS
+# ARROW KEY movement binds
 window.bind('<Left>', lambda event: change_direction('left'))
 window.bind('<Right>', lambda event: change_direction('right'))
 window.bind('<Up>', lambda event: change_direction('up'))
 window.bind('<Down>', lambda event: change_direction('down'))
 
-snake = Snake()
-food = Food()
+# RESTART binds
+window.bind('<Key-R>', restart_game)
+window.bind('<Key-r>', restart_game)
 
-next_turn(snake, food)
+# WASD movement binds
+window.bind('<Key-A>', lambda event: change_direction('left'))
+window.bind('<Key-D>', lambda event: change_direction('right'))
+window.bind('<Key-W>', lambda event: change_direction('up'))
+window.bind('<Key-S>', lambda event: change_direction('down'))
+window.bind('<Key-a>', lambda event: change_direction('left'))
+window.bind('<Key-d>', lambda event: change_direction('right'))
+window.bind('<Key-w>', lambda event: change_direction('up'))
+window.bind('<Key-s>', lambda event: change_direction('down'))
+
+
+restart_game()
 
 window.mainloop()
