@@ -6,9 +6,6 @@ from pathlib import Path
 import random
 import pygame
 
-# TODO LIST
-# levels
-
 
 # GAME SETTINGS
 GAME_RUNNING = None
