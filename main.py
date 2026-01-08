@@ -1,21 +1,22 @@
-import tkinter
 from tkinter import *
+
 import tk
 from tkextrafont import Font
 from pathlib import Path
 import random
+import pygame
 
 # TODO LIST
-# Pause button, sound effects, high score, levels
+# levels
 
 
 # GAME SETTINGS
 GAME_RUNNING = None
 GAME_PAUSED = False
 GAME_OVER = False
-GAME_WIDTH = 800
-GAME_HEIGHT = 600
-SPEED = 300
+GAME_WIDTH = 1000
+GAME_HEIGHT = 700
+SPEED = 100
 SPACE_SIZE = 50
 BODY_PARTS = 3
 SNAKE_COLOR = '#ebe134'
@@ -47,7 +48,7 @@ class Food:
 
 # FUNCTIONS
 def next_turn():
-    global GAME_RUNNING, score, food
+    global GAME_RUNNING, score, food, high_score
 
     if GAME_PAUSED:
         return
@@ -73,6 +74,7 @@ def next_turn():
     if x == food.coordinates[0] and y == food.coordinates[1]:
         global score
         score += 1
+        play_food_pickup()
         label.config(text = f"Score: {score}")
         canvas.delete("food")
         food = Food()
@@ -82,6 +84,10 @@ def next_turn():
         del snake.squares[-1]
 
     if check_collisions(snake):
+        if score > high_score:
+            high_score = score
+            high_score_label.config(text = f"High Score: {high_score}")
+        play_collision()
         game_over()
     else:
         GAME_RUNNING = window.after(SPEED, next_turn)
@@ -121,7 +127,6 @@ def check_collisions(snake):
 
 def game_over():
     global GAME_OVER
-
     canvas.delete(ALL)
     canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()/2,
                        font=custom_font, text="GAME OVER", fill="white")
@@ -147,7 +152,6 @@ def restart_game(event=None):
 
     next_turn()
 
-
 def pause_game(event=None):
     global GAME_PAUSED, GAME_RUNNING, GAME_OVER
 
@@ -162,24 +166,41 @@ def pause_game(event=None):
             canvas.delete("pause_text")
             next_turn()
 
+def play_collision():
+    pygame.mixer.Sound("collision.mp3").play().set_volume(0.05)
+
+def play_food_pickup():
+    pygame.mixer.Sound("food_pickup.mp3").play().set_volume(0.02)
 
 window = Tk()
 window.title("Snake Game")
 window.resizable(False, False)
-
+icon_path = Path(__file__).parent / 'favicon.png'
+icon = PhotoImage(file=str(icon_path))
+window.iconphoto(False, icon)
 score = 0
+high_score = 0
 direction = 'right'
+pygame.mixer.init()
+pygame.mixer.Sound("bg_music.mp3").play(loops=-1).set_volume(0.05)
 
 font_path = Path(__file__).parent / 'RetroGaming.ttf'
 custom_font = Font(file = str(font_path), family = "Retro Gaming", weight = 'bold', size = 30)
 
-label  = Label(window, text = f"Score: {score}", font = custom_font)
-label.grid(row = 0, column = 0)
+title_label = Label(window, text = "Snake Game", font = custom_font)
+title_label.grid(row = 0, column = 0)
+
+label = Label(window, text = f"Score: {score}", font = custom_font)
+label.grid(row = 2, column = 0)
+
 restart = Button(window, text = "Restart", command = restart_game, font = custom_font, pady = 0)
-restart.grid(row = 0, column = 1, pady = 10)
+restart.grid(row = 0, column = 2, pady = 10)
+
+high_score_label = Label(window, text = f"High Score: {high_score}", font = custom_font)
+high_score_label.grid(row = 2, column = 2)
 
 canvas = Canvas(window, bg = BACKGROUND_COLOR, width = GAME_WIDTH, height = GAME_HEIGHT)
-canvas.grid(row = 1, columnspan = 2)
+canvas.grid(row = 1, columnspan = 3)
 
 window.update()
 
