@@ -18,5 +18,5 @@ Use **WASD** or **Arrow Keys** to move. Press **P** to pause and **R** to restar
 
 ### Gameplay
 <p>
-  <img src="assets/gameplay.gif" width="500" alt="Snake Game Gameplay Demo">
+  <img src="assets/Gameplay.gif" alt="Snake Game Gameplay Demo">
 </p>
